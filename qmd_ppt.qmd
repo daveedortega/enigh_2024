@@ -1,0 +1,333 @@
+---
+title: "Análisis del X decíl Inegi"
+subtitle: "DAOA — 23/08/2025"
+format: 
+  revealjs:
+    fontsize: 14pt
+    title-slide: False
+---
+
+## Análisis del X decíl
+
+### DAOA — 23/08/2025
+
+![](imgs/wealth_2.png){width="100%"}
+
+## ENIGH 2024
+
+Hace poco salió la ENIGH y a mí me estresa y me molesta mucho siempre la conversación al rededor de los datos publicados, entonces voy a hacer una pequeña ppt así medio fea que explique por qué.
+
+#### ¿Qué es la ENIGH?
+
+El INEGI levanta cada 2 años la Encuesta Nacional de Ingresos y Gastos en los Hogares. Esta mide la distribución, monto y estructura de los ingresos y gastos de los hogares en México. Se levanta cada dos años con representatividad nacional, estatal y urbano-rural. Utiliza un diseño muestral probabilístico, estratificado y por conglomerados, y aplica factores de expansión para hacer inferencias poblacionales.
+
+![](imgs/cuanto-gana-la-clase-baja-de-mexico-dc2c4095-focus-0-0-966-544.png){fig-align="center" width="466"}
+
+[ENIGH 2024](https://www.inegi.org.mx/programas/enigh/nc/2024/)
+
+## Mi problema con la ENIGH
+
+La realidad es que la ENIGH es un excelente y muy importante instrumento de medición económica, pero la presentación de resultados siempre me deja con una incógnita muy seria, que refiere a la distribución de ingresos.
+
+![Distribución de Ingresos](imgs/tabla_tamano_deciles.png){#tabla_distr}
+
+## Ingreso Corriente Trimestral Promedio
+
+Pasa que, yo siempre, como persona y señor competitivo, me gusta compararme y siempre me cuesta trabajo entender esa última tabla de distribución del ingreso.
+
+Particularmente porque la definición de Ingreso Corriente Trimestral Promedio engloba un montón de cosas y en principio a mí me interesa:
+
+1.  Revisar la distribución de **ingresos laborales**. No sé si es la edad, pero pues preguntar por cuánto ganamos y demás es mi cotidianeidad. Me estresa la gente desclasada que no se reconoce como asalariada y que **nadie se reconoce como pobre**, sólo los muy pobres. Porque me pasa siempre que, estando en mi pequeña burbuja, escucho [comentarios extraños sobre los salarios](#0) en [todos los sentidos](#0) relativos al salario y como que es buena idea ver la vara que pone la ENIGH de ello.
+2.  Dado que vivo en una burbuja, me interesa además **revisar la composición de Ingresos entre deciles**, particularmente el del **décimo decil**. Esto porque, por alguna razón, nos cuesta mucho aceptar que este país [es desigual, sí, pero también pobre](https://www.youtube.com/watch?v=fB22wTAOvpg). Y me rompe la madre ver a todos los lumpenproletarios de mi generación no entender que están más cerca de terminar como el señor vago del centro que como el idiota de Padre Rico Padre Pobre o el Elías Ayub o el ridículo de moda de los videos de autoayuda.
+
+No dimensionamos correctamente lo extremadamente desigual, sí, pero también lo **pobre e injusto** que se ha vuelto este país. Me da la impresión que las lecturas que sacamos de esta encuesta la mayoría son un poco sesgadas y superficiales y por alguna razón nadie pega el puto grito al cielo como yo. Hay que verla como quien la ve desde fuera para que exista ese enojo, supongo.
+
+## Datos generales de Enojo: Menor salario promedio anual ajustado a precios
+
+::::: columns
+::: {.column width="60%"}
+![](imgs/ocde_wages.jpg)
+:::
+
+::: {.column width="40%"}
+México es, de entre la lista de 35 países de la OCDE (faltaría aquí incluir a Chile, Colombia y Costa Rica), en 2023 (último año de la medición) el país con el menor salario promedio anual **ajustado a precios de todos los países**.
+
+Es decir, somos, con distancia LOS MÁS POBRES. Los que menos cosas pueden comprar, los que menos capital acumulan. Me molesta que del internacionalismo sólo se quedó el odio a los gringos y se ha perdido la idea de compararse con otros países términos económicos. La noción de que *somos muy distintos* nos aleja de concebir realidades distintas a la nuestra, que, hay que VER POR FAVOR, es jodida.
+
+Hubiera actualizado la cifra pero la [página de la OCDE](https://data-explorer.oecd.org/vis?tm=average%20annual%20wage&pg=0&snb=26&vw=tb&df%5Bds%5D=dsDisseminateFinalDMZ&df%5Bid%5D=DSD_EARNINGS%40AV_AN_WAGE&df%5Bag%5D=OECD.ELS.SAE&df%5Bvs%5D=1.0&dq=......&pd=2000%2C&to%5BTIME_PERIOD%5D=false) no funciona.
+:::
+:::::
+
+## Datos generales de Enojo: El segundo país que más trabaja:
+
+Dijeras tú, ganamos poco pero vivimos de ver el monte y la vida contemplativa. Vete a la verga, aquí nos explotamos como nadie, y no pendejamente.
+
+```{r, eval=T, echo=F, fig.width=10, fig.height=8}
+library(tidyverse)
+library(scales)
+horas_ocde <- read_csv('input/horas_ocde.csv')
+
+horas_ocde %>% mutate(pais = str_wrap(`Reference area`, 10)) %>%
+  ggplot(aes(reorder(pais, OBS_VALUE), OBS_VALUE))+
+  geom_col()+
+  geom_col(data = horas_ocde %>% mutate(pais = str_wrap(`Reference area`, 10)) %>% filter(pais == 'Mexico'), 
+           fill = '#0B5637')+
+  geom_label(aes(label = comma(OBS_VALUE, accuracy = 1)))+
+  theme_minimal()+
+  labs(x ='', y = 'Horas', title = 'Horas anuales trabjadas en promedio por país', 
+       subtitle = 'Durante 2023', caption = 'Elaboración propia, OCDE'  )+
+  theme(plot.title = element_text(size = 20, face = 'bold'))+
+  coord_flip()
+
+
+
+
+```
+
+Dimensionemos que, en promedio son 2,207 horas de trabajo al año, que nos da semanas de 42 horas laborales, **en promedio**.
+
+Hay una discusión de si las 40 horas y que si sí y que si no. Mamón trabajamos hasta 30% más horas que **JAPÓN** donde según la cultura laboral es tan cabona que [la gente neta se mure de lo mucho que chambea](https://www.youtube.com/watch?v=9Y-YJEtxHeo) y cosas así. Sólo COLOMBIA chambea más que nosotros.
+
+[Datos](https://data-explorer.oecd.org/vis?tm=average%20annual%20wage&pg=0&snb=26&vw=tb&df%5Bds%5D=dsDisseminateFinalDMZ&df%5Bid%5D=DSD_EARNINGS%40AV_AN_WAGE&df%5Bag%5D=OECD.ELS.SAE&df%5Bvs%5D=1.0&dq=......&pd=2000%2C&to%5BTIME_PERIOD%5D=false)
+
+## Enojo general 3: El dinero no lo es todo dices
+
+Somos necios acá y como que el torpe orgullo nacionalista malencausado no nos permite ver que de heuvos las cosas no están bien, por donde le quieras ver papito.
+
+Agárrate el indice compuesto de bienestar de la OCDE que mide un montón de cosas como acceso a la vivienda, calidad de trabajo, salud, bienestar autorreportado, etc. **SOMOS**, tras un montón de configuraciones y demás, neta aún intentando truquearlo, el tercer país peor rankeado.
+
+![](imgs/composite_ocde.png){fig-align="center"}
+
+Que qué puto neoliberal que cómo me gusta hacerle el juego a la derecha, que por qué no simplemente doy gracias de andar acá, **no pendejo**, simplemente me gustaría no estar sumido en la verga, porque pa pronto en esto yo no ando perdidendo, pero ocupo que todos VEAMOS que de huevos **no estamos ganando**. Diría la señora esa NO ES NORMAL PTM.
+
+[Data](https://www.oecd.org/en/data/tools/oecd-better-life-index.html)
+
+## ENOJO 4, quizá TOP ENOJOS
+
+Estra gráfica la he visto en muchas formas, en múltiples presentaciones a lo largo de mi vida. A mí en lo personal me da **PESADILLAS ALV**. No doy con la fuente, pero si el [titular de la CONASAMI la usa para su artículo](#0) me parece válido ponerla aquí.
+
+![](imgs/mean_wage.png){fig-align="center"}
+
+Sí topan que el salario promedio A PENAS ES MÁS ALTO QUE EL DE 1985, nono, váyanse alv, porque esta va con la siguiente.
+
+## A ver cómprate una casa mamón
+
+Ocupo que la gente tope que todo se ha hecho considerablemente más putas caro desde 1985 wey, como **la vivienda**. Y es que no mames, ya neta es imposible pensar en hacerse de una propiedad en este perro país. No es justo, esta REALIDAD TANGIBLE, afecta la cognición de nuestro futuro, porque se siente como si no lo hubiera.
+
+```{r, eval=T, echo=F}
+library(tidyverse)
+library(janitor)
+indice_shf <- read_delim('input/serie_shf.csv', delim = ';') %>% clean_names()
+indice_shf <- indice_shf %>% filter(global == 'Nacional') %>% 
+  mutate(fecha = case_when(trimestre == 1 ~ as.Date(paste(ano, 1, 1, sep = '-')), 
+                           trimestre == 2 ~ as.Date(paste(ano, 4, 1, sep = '-')), 
+                           trimestre == 3 ~ as.Date(paste(ano, 7, 1, sep = '-')), 
+                           trimestre == 4 ~ as.Date(paste(ano, 9, 1, sep = '-')), 
+                           ))
+  
+indice_shf %>% ggplot(aes(fecha, indice))+
+  geom_line(linewidth = 1, color = 'black')+
+  geom_point(color = 'blue', size = 1)+
+  geom_segment(
+    aes(x = indice_shf$fecha[1], y = indice_shf$indice[1], 
+        xend = indice_shf$fecha[35], yend = 15000),
+        color = "red",
+        linetype = "dashed",
+        linewidth = 1
+    ) +
+  geom_segment(
+    aes(x = indice_shf$fecha[35], y = 15000, 
+        xend = indice_shf$fecha[nrow(indice_shf)], yend = indice_shf$indice[nrow(indice_shf)]),
+        color = "red",
+        linetype = "dashed",
+        linewidth = 1
+     )+
+  annotate(geom = 'label', size = 10, 
+           x = indice_shf$fecha[30], y = 18000,label = paste(comma(19189/4847*100, suffix = '%', accuracy = .01) ))+
+  theme_minimal()+
+  labs(x = '', y = 'Índice de Precios de la Vivienda', title = 'Serie del Índice de precios a la vivienda de la SHF', 
+       subtitle = 'Serie de 2005 - 2025 trimestral', caption = 'Fuente: SHF')+
+  theme(legend.position = 'none', 
+        text = element_text(size = 12, family = 'mulish'), 
+        plot.title = element_text(size = 20, face = 'bold'), 
+        plot.subtitle = element_text(size = 18),
+        )
+```
+
+Lo pongo en grande para que la gente tope que según la [Sociedad Hipotecaria Federal](https://transparencia.shf.gob.mx/sitepages/IndicePV.aspx), sólo desde el 2005 a la fecha, en promedio los precios a la vivienda **NACIONALMENTE** han crecido en **395%**.
+
+¿Sí topan que 395%\>13% de incremento en el salario promedio? Cómo nos va a alcanzar hijos de la verga.
+
+Adicional a eso yo vivo en la tonta CDMX y en la Zona Metropolitana han crecido en 437%, sólo en la CDMX en **517%**.
+
+## O ya de menos una comida
+
+```{r, eval=T, echo=F}
+serie_inpc <- read_csv("input/serie_inpc.csv", 
+                       locale = locale(encoding = "ISO-8859-1"), 
+                       skip = 18) %>% clean_names()
+
+
+
+serie_plot <- serie_inpc %>% mutate(fecha = as.Date(fecha, tryFormats = '%d/%m/%Y')) %>%
+  filter(fecha>='1997-01-01')  
+
+serie_plot %>% ggplot(aes(fecha, sp1_2))+
+  geom_line(linewidth = 1, color = 'black')+
+  geom_point(color = 'lightblue', size = 0.5)+
+  geom_segment(
+    aes(x = fecha[1], y = sp1_2[1], 
+        xend = fecha[55], yend = 100),
+    color = "red",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  geom_segment(
+    aes(x = fecha[55], y = 100, 
+        xend = fecha[nrow(serie_plot)], yend = sp1_2[nrow(serie_plot)]),
+    color = "red",
+    linetype = "dashed",
+    linewidth = 1
+  ) +
+  annotate(geom = 'label', size = 12, 
+           x = as.Date(serie_plot$fecha[75]), y = 125,
+           label = comma(477.9661, suffix = '%', accuracy = .01))+
+  theme_minimal()+
+  labs(x = '', y = 'Índice de Precios al Consumidor', title = 'Serie del Índice de precios al Consumidor', 
+       subtitle = 'Serie de 1997 - 2025 Mensual', caption = 'Fuente: BANXICO x INEGI')+
+  theme(legend.position = 'none', 
+        text = element_text(size = 12, family = 'mulish'), 
+        plot.title = element_text(size = 20, face = 'bold'), 
+        plot.subtitle = element_text(size = 18),
+  )
+
+```
+
+O sea todo está por lo menos 4.8 veces más caro de que yo nací, la vivienda hasta 5 veces más cara (no es más porque no da la serie) y el salario promedio menos del 13% más alto, o sea todo DE LA VERGA pues.
+
+[Datos](https://www.banxico.org.mx/SieInternet/consultarDirectorioInternetAction.do?sector=8&accion=consultarCuadro&idCuadro=CP154&locale=es)
+
+## FIN DE LA INTRO
+
+Yo quiero mucho este país, pero me molesta un tanto que la conversación se ha vuelto un poco árida en cuanto a la economía. Creo que falta reconocimiento, tanto de las autoridades como de la sociedad, de los grandes retos que hay que aforntar.
+
+Me parece que, si bien han perdido vigencia los postulados del neoliberalismo clásico, nos hemos resignado de alguna suerte a lo que es este país hoy en día.
+
+Un país que crece poco, que no tiene muchas ideas para incentivar el emprendedurismo, que no está dispuesto a agarrarse a chingadazos con los millonarios y hacerse de los medios de producción y por lo tanto deja a sus próximas generaciones (YO ALV) desprovistas de oportunidades para hacerse de un futuro.
+
+Como morro de ciudad, creo que, como todos los jóvenes, hoy padecemos de la pérdida de derechos laborales traidas por el neoliberalismo desde el 94. Incremento generalizado de los bienes inmuebles al grado de hacerse incosteables y todo eso compaginado con altísimas presiones para "sobresalir".
+
+Ya me estoy yendo alv nivel fightclub pero sí hay algo en el mame de que todo el tiempo estamos expuestos a vidas de las cuales NO SOMOS PARTÍCIPES, generando anomia y cosas así. Yo por eso con AMLO alv y sus ideas moralizantes sobre lo que es la vida y el deber ser de la política.
+
+Pero últimamente me sigo estresando por el futuro de este país y no le veo salida alv y por eso esta ppt.
+
+## Algunas preguntas
+
+La realidad es que yo configuro, haciendo la simple adición de todo lo previo, un futuro bastante gris. Cuando se terminen de asentar este tipo de procesos de marginalización y concentración del capital, ¿cómo reaccionará nuestra sociedad?
+
+Si ante la incógnita de cómo lograr un proyecto de vida y qué es aquello que se lo impide no puede formularse una respuesta, ¿a dónde lo llevará su frustración?.
+
+No es casualidad que la juventud se vea tristemente a la vida criminal, los [tik toks de rosa pastel](#0) y los payasitos esos también del tiktok, en conjunto con las enfermedades mentales vayan a la alza en este país con el panorama. Sin embargo, postulo que, como mencionaba AMLO, la red familiar y el tejido social extendido del país es en realidad la institución que resuelve en su mayoría las carencias de esta generación. Pero, ¿y cuando ellos se hayan ido y quedemos nosotros?
+
+Será que el proyecto de la nueva izquierda mexicana logrará configurar un contrapeso al enorme e inmenso proceso de acumulación y permitirá que la generación de riqueza y el mecanismo de valor agregado del capitalismo floresca? Sueño húmedo tecnócrata.
+
+Pasa que yo no creo que, dado que el mundo juega al capitalismo, podamos ignorar la realidad del sistema globalista y sus tentáculos aquí. No creo que un mundo en el que quepan todos los mundos pueda ignorar la injerencia del gran orden económico mundial, del sistema financiero global, y de todas esas chingaderas que vinieron a vender la generación pasada de economistas del WTO.
+
+Al final del día construyeron hegemonía y la disidencia se castiga como en Cuba, como en Venezuela, incluso como en Rusia. ¿Qué futuro auguramos? Sepa la verga.
+
+Pero ese sentir, de ausencia de futuro, va junto con pegado de la euforia de lo pasajero y la añoranza de lo perdido. Todo, creo, presente en la escena nacional musical, con [SEXOLANDIA 2](https://open.spotify.com/album/0dJgw5GP0SBxi2T92jgakd?si=KoFyPWq7QRaNwti6XPJpVQ) y [tragaperras](https://open.spotify.com/album/0SfLaf6FpAAvsgMUi8O1p6?si=za7_22omRcWHTDWYX7ZoFQ) moviendo la CDMX.
+
+## En Fin, ENIGH
+
+Regresando a lo que me trajo aquí de inicio.
+
+Primero, nosotros hacemos la medición de la riqueza de forma trimestral y por hogares; esto está bien y todo pero a mí se me hace mucho más natural, como asalariado que somos uno de los [**23.59 millones de asalariados**](http://siel.stps.gob.mx:303/ibmcognos/cgi-bin/cognos.cgi?ui.name=XSSSTARTTotal20de20TrabajadoresXSSEND&run.outputFormat=&run.prompt=true&ui.action=run&b_action=cognosViewer&encoding=UTF-8&ui.object=XSSSTART2fcontent2ffolder5b40name3d27Sitio20STPS275d2ffolder5b40name3d271.20Asegurados20en20el20IMSS275d2freport5b40name3d27Total20de20Trabajadores27*5dXSSEND) afiliados al imss, medirlo con mi **sueldo mensual**.
+
+Para ello la transformación que haremos es:
+
+$$
+IngM = \frac{IngLaboral}{NEmpleados} * \frac{1}{3}
+$$
+
+Que, tomando el concentrado del inegi se ve como:
+
+```{r, eval=T, echo=TRUE}
+library(tidyverse)
+concentrado_hogar <- read_csv('input/concentradohogar.csv')
+concentrado_trabajadores <- concentrado_hogar %>%
+  filter(ocupados>0) %>% # Nos quedamos sólo con hogares con trabajadores
+  mutate(ingreso_mensual_pp = trabajo/(ocupados * 3) )
+```
+
+Ahora, recordemos que es una encuesta esta cosa, por lo que tenemos que ajustar por **factor** para poder obtener de forma correcta la distribución del ingreso, por lo que usamos *srvyr* o *survey*.
+
+```{r, eval=T, echo=TRUE}
+library(survey)
+library(srvyr)
+
+survey_trabajadores <- svydesign(ids = ~folioviv, weights = ~factor, data = concentrado_trabajadores)
+deciles <- svyquantile(~ingreso_mensual_pp, survey_trabajadores, quantiles = seq(0.1, 0.9, 0.1), na.rm = TRUE)
+
+deciles$ingreso_mensual_pp
+```
+
+## 19,972.8 MXN al Mes
+
+Piensen en este número. El 90% de los trabajadores de este país, de acuerdo a esta encuesta, ganan menos que este número al mes. Revisemos la distribución.
+
+```{r, eval=T, echo=F}
+concentrado_trabajadores %>% ggplot(aes(ingreso_mensual_pp, weights = factor))+
+  geom_histogram(bins = 100)+
+  geom_vline(xintercept = 19972.8, colour = 'red', linetype = 'dashed')+
+  theme_minimal()+
+  labs(x = '', y = '', title = 'Distribución del ingreso laboral en México', subtitle = 'Remuneración mensual, pesos de 2024', 
+       caption = 'Elaboración propia, ENIGH 2024 - INEGI')+
+  theme(text = element_text(family = 'mulish'), 
+        plot.title = element_text(size = 28, face = 'bold'), 
+        plot.subtitle = element_text(size = 20))
+```
+
+Está tan degenerada la gráfica que hay que censurar los valores más altos para verla correctamente.
+
+## Distribución del Ingreso Laboral en México
+
+```{r, eval=T, echo=F}
+cuts <- svyquantile(~ingreso_mensual_pp, survey_trabajadores,
+                    quantiles = c(0.01, 0.99), na.rm = TRUE)
+
+concentrado_trabajadores %>%
+  mutate(ingreso_mensual_pp = ifelse(ingreso_mensual_pp>50258.14, 50258.14,ingreso_mensual_pp )) %>% 
+  ggplot(aes(ingreso_mensual_pp, weights = factor))+
+  geom_histogram(bins = 100)+
+  geom_vline(xintercept = 19972.8, colour = 'red', linetype = 'dashed')+
+  theme_minimal()+
+  labs(x = '', y = '', title = 'Distribución del ingreso laboral en México', subtitle = 'Remuneración mensual, pesos de 2024', 
+       caption = 'Elaboración propia, ENIGH 2024 - INEGI')+
+  theme(text = element_text(family = 'mulish'), 
+        plot.title = element_text(size = 28, face = 'bold'), 
+        plot.subtitle = element_text(size = 20))
+```
+
+Parece poco justo mantener a aquellos que, si bien están ocupados, no percibieron un salario, por lo que revisemos la distribución para aquellos **trabajadores que percibieron un salario**.
+
+## Distribución del Ingreso Laboral en México para Trabajadores que Percibieron un salario
+
+Vale la pena volver a calcular los deciles, dado que estamos cambiando el universo, en principio se antoja extraño que el
+
+```{r, eval=T, echo=TRUE}
+survey_trabajadores %>% as_survey() %>% mutate(trabajo_y_no_recibio = ifelse(trabajo==0,1,0)) %>% 
+  summarise(survey_mean(trabajo_y_no_recibio)) 
+```
+
+**14.5% de los hogares con personas que trabajan NO TUVIERON UN INGRESO LABORAL**, esto puede deberse a la definición de ocupado que usa el INEGI, donde las personas que buscan trabajo se encuentran ocupadas, según ellos.
+
+```{r, eval=T, echo=TRUE}
+concentrado_trabajadores_ct <- concentrado_trabajadores %>% filter(trabajo>0)
+survey_trabajadores <- svydesign(ids = ~folioviv, weights = ~factor, data = concentrado_trabajadores_ct)
+deciles <- svyquantile(~ingreso_mensual_pp, survey_trabajadores, quantiles = seq(0.1, 0.9, 0.1), na.rm = TRUE)
+
+deciles$ingreso_mensual_pp
+```
+
+::: :::::
+:::

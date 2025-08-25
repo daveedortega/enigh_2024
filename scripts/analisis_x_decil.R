@@ -75,6 +75,57 @@ general_sexo_plot %>%
   scale_fill_manual(values = c('firebrick', 'goldenrod'))+
   facet_wrap(~var, scales = 'free')
 
+# Distribución del ingreso laboral en méxico ------------------------------
+
+distr_income <- concentrado_hogar %>% select(ingreso_laboral = trabajo, ocupados, factor) %>% 
+  mutate(ingreso_mensual = ingreso_laboral/3, 
+         ingreso_mensual_pp = ingreso_mensual/ocupados)
+
+# Basic distribution plot (histogram)
+ggplot(distr_income, aes(x = ingreso_mensual_pp, weight = factor)) +
+  geom_histogram(binwidth = 1000, color = "black") +
+  labs(x = "Monthly wage", y = "Number of households (weighted)")+
+  geom_vline(xintercept = 42000, color = 'red', linetype = 'dashed')
+
+# Density plot
+ggplot(distr_income, aes(x = ingreso_mensual, weight = weights))+
+  geom_density()
+
+library(dplyr)
+library(survey)
+library(DescTools)  # For Winsorize()
+
+# Taking the very top off
+distr_income <- distr_income %>% 
+  mutate(ing_cens = Winsorize(ingreso_mensual, val = quantile(ingreso_mensual, probs = c(0,0.99))))
+
+ggplot(distr_income,aes(x = ing_cens, weight = weights))+
+  geom_density()+
+  geom_vline(xintercept = 42000, color = 'red', linetype = 'dashed')
+
+
+mean(distr_income$ingreso_mensual <= 42000)
+
+ggplot(distr_income,aes(x = ing_cens, weight = weights))+
+  geom_histogram(binwidth = 1000, color = "black") +
+  labs(x = "Monthly wage", y = "Number of households (weighted)")+
+  geom_vline(xintercept = 42000, color = 'red', linetype = 'dashed')
+
+ggplot(distr_income, aes(x = ingreso_mensual)) +
+  stat_ecdf(geom = "step", color = "firebrick", linewidth = 1) +
+  labs(
+    title = "Cumulative Distribution Function of Monthly Labor Income",
+    subtitle = 'In Mexico, during 2024, using 2024 MXN',
+    x = "MXN",
+    y = "CDF", 
+    caption = 'DAOA with INEGI - ENIGH 2024 Data'
+  ) +
+  theme_minimal()+
+  geom_vline(xintercept = 42000, color = 'red', linetype = 'dashed')+
+  annotate("text", x = 42000, y = 0.9537 + 0.05,
+           label = paste0("CDF = ", round(0.9537598 * 100, 3)),
+           color = "black")
+
 
 
 # HH income distribution in cdmx ------------------------------------------
