@@ -9,7 +9,7 @@
 # Preparar Espacio --------------------------------------------------------
 
 dev.off()
-pacman::p_load(tidyverse, scales, janitor, sf)
+pacman::p_load(tidyverse, scales, janitor, sf, survey)
 rm(list = ls())
 
 # Cargar Datos ------------------------------------------------------------
@@ -77,36 +77,52 @@ general_sexo_plot %>%
 
 # Distribución del ingreso laboral en méxico ------------------------------
 
-distr_income <- concentrado_hogar %>% select(ingreso_laboral = trabajo, ocupados, factor) %>% 
+options(scipen = 999)
+
+
+distr_income <- concentrado_hogar %>% select(ingreso_laboral = trabajo, 
+                                             ocupados, 
+                                             factor) %>% 
   mutate(ingreso_mensual = ingreso_laboral/3, 
-         ingreso_mensual_pp = ingreso_mensual/ocupados)
+         ingreso_mensual_pp = ingreso_mensual/ocupados, 
+         w_ocupados = ocupados * factor)
 
 # Basic distribution plot (histogram)
-ggplot(distr_income, aes(x = ingreso_mensual_pp, weight = factor)) +
+ggplot(distr_income, aes(x = ingreso_mensual_pp, weight = w_ocupados
+                         )) +
   geom_histogram(binwidth = 1000, color = "black") +
-  labs(x = "Monthly wage", y = "Number of households (weighted)")+
-  geom_vline(xintercept = 42000, color = 'red', linetype = 'dashed')
+  labs(x = "Salario Mensual (MXN)", y = "Número de Ocupados (Trabjaadores)", 
+       title = 'Distribución del Ingreso Laboral Mensual Promedio', 
+       subtitle = 'Para Ocupados en 2024', caption = 'Pesos de 2024\nFuente: ENIGH 2024 - INEGI')+
+  geom_vline(xintercept = 42000, color = 'red', linetype = 'dashed')+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 20, face = 'bold', family = 'mulish'), 
+        plot.subtitle = element_text(size = 14, family = 'mulish'), 
+        text = element_text('mulish')
+        )
+
 
 # Density plot
-ggplot(distr_income, aes(x = ingreso_mensual, weight = weights))+
+ggplot(distr_income, aes(x = ingreso_mensual, weight = w_ocupados))+
   geom_density()
 
 library(dplyr)
 library(survey)
 library(DescTools)  # For Winsorize()
 
+
 # Taking the very top off
 distr_income <- distr_income %>% 
   mutate(ing_cens = Winsorize(ingreso_mensual, val = quantile(ingreso_mensual, probs = c(0,0.99))))
 
-ggplot(distr_income,aes(x = ing_cens, weight = weights))+
+ggplot(distr_income,aes(x = ing_cens, weights = w_ocupados))+
   geom_density()+
   geom_vline(xintercept = 42000, color = 'red', linetype = 'dashed')
 
 
-mean(distr_income$ingreso_mensual <= 42000)
+mean(distr_income$ingreso_mensual <= 80000)
 
-ggplot(distr_income,aes(x = ing_cens, weight = weights))+
+ggplot(distr_income,aes(x = ing_cens, weight = w_ocupados))+
   geom_histogram(binwidth = 1000, color = "black") +
   labs(x = "Monthly wage", y = "Number of households (weighted)")+
   geom_vline(xintercept = 42000, color = 'red', linetype = 'dashed')
@@ -166,6 +182,7 @@ income_mensual_laboral %>% filter(!is.na(ingreso_l_mensual_ocupados), ingreso_l_
   summarise(ingreso_l_mensual_ocupados = mean(ingreso_l_mensual_ocupados, na.rm = T), n = n()) %>% 
   mutate(X_decil = paste0('X-',X_decil)) %>% 
   pivot_longer(cols = 2:3, names_to = 'var', values_to = 'val') %>% 
+  filter(var == 'ingreso_l_mensual_ocupados') %>% 
   ggplot(aes(reorder(X_decil, val), val, fill = factor(X_decil)))+
   geom_col(color = 'black')+
   geom_label(aes(label = comma(val)))+
@@ -216,6 +233,7 @@ income_mensual %>% filter(!is.na(ingreso_total_mensual), ingreso_total_mensual!=
   mutate(X_decil = paste0('X-',X_decil)) %>% 
   summarise(ingreso_total_mensual = mean(ingreso_total_mensual, na.rm = T), n = n()) %>% 
   pivot_longer(cols = 2:3, names_to = 'var', values_to = 'val') %>% 
+  filter(var == 'ingreso_total_mensual') %>% 
   ggplot(aes(reorder(X_decil, val), val, fill = factor(X_decil)))+
   geom_col(color = 'black')+
   geom_label(aes(label = comma(val)))+
@@ -280,6 +298,55 @@ income_mensual %>% filter(!is.na(ingreso_total_mensual), ingreso_total_mensual!=
   group_by(X_decil) %>% 
   summarise(ingreso_total_mensual = mean(ingreso_total_mensual, na.rm = T), n = n()) %>% 
   pivot_longer(cols = 2:3, names_to = 'var', values_to = 'val') %>% 
+  filter(var == 'ingreso_total_mensual') %>% 
+  ggplot(aes(factor(X_decil), val, fill = val))+
+  geom_col(color = 'black')+
+  geom_label(aes(label = comma(val)), color = 'white')+
+  theme_minimal()+
+  facet_wrap(~var, scales = 'free')+
+  scale_fill_gradient(low = 'lightgreen', high = 'darkgreen')
+
+## De impacto chiapas, revisar -----
+entidades %>% count(NOMGEO) %>% as.data.frame()
+
+poblacion_chiapas <- poblacion %>% filter(entidad == '19') 
+hogares_chiapas <- concentrado_hogar %>% filter(folioviv %in% poblacion_chiapas$folioviv) 
+
+income_mensual <- hogares_chiapas %>% mutate(ingreso_laboral = trabajo * factor, 
+                                          ocupados = perc_ocupa * factor, 
+                                          integrantes = tot_integ * factor, 
+                                          ingreso_total = ing_cor * factor
+) %>% 
+  select(ingreso_laboral, ingreso_total, factor, ocupados, integrantes) %>% 
+  mutate(ingreso_l_trim_ocupados = ingreso_laboral/ocupados, 
+         ingreso_l_mensual_ocupados = ingreso_l_trim_ocupados/3, 
+         ingreso_total_trim = ingreso_total/integrantes, 
+         ingreso_total_mensual = ingreso_total_trim / 3) %>% 
+  filter(!is.na(ingreso_l_mensual_ocupados), ingreso_l_mensual_ocupados!= Inf)
+
+income_mensual %>% as_survey(weights =factor) %>% summarise(survey_mean(ingreso_l_mensual_ocupados))
+
+income_mensual %>% filter(!is.na(ingreso_total_mensual), ingreso_total_mensual!= Inf) %>%
+  mutate(decil = ntile(n =10,ingreso_total_mensual)) %>% 
+  group_by(decil) %>% 
+  summarise(ingreso_total_mensual = mean(ingreso_total_mensual, na.rm = T), n = n()) %>% 
+  pivot_longer(cols = 2:3, names_to = 'var', values_to = 'val') %>% 
+  filter(var == 'ingreso_total_mensual') %>% 
+  ggplot(aes(factor(decil), val, fill = val))+
+  geom_col(color = 'black')+
+  geom_label(aes(label = comma(val)), color = 'white')+
+  theme_minimal()+
+  facet_wrap(~var, scales = 'free')+
+  scale_fill_gradient(low = 'lightgreen', high = 'darkgreen')
+
+income_mensual %>% filter(!is.na(ingreso_total_mensual), ingreso_total_mensual!= Inf) %>%
+  mutate(decil = ntile(n =10,ingreso_total_mensual)) %>% 
+  filter(decil == 10) %>% 
+  mutate(X_decil = ntile(ingreso_total_mensual, 10)) %>% 
+  group_by(X_decil) %>% 
+  summarise(ingreso_total_mensual = mean(ingreso_total_mensual, na.rm = T), n = n()) %>% 
+  pivot_longer(cols = 2:3, names_to = 'var', values_to = 'val') %>% 
+  filter(var == 'ingreso_total_mensual') %>% 
   ggplot(aes(factor(X_decil), val, fill = val))+
   geom_col(color = 'black')+
   geom_label(aes(label = comma(val)), color = 'white')+

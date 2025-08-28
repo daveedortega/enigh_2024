@@ -289,14 +289,25 @@ concentrado_trabajadores %>% ggplot(aes(ingreso_mensual_pp, weights = factor))+
 
 Está tan degenerada la gráfica que hay que censurar los valores más altos para verla correctamente.
 
-## Distribución del Ingreso Laboral en México
+## Nota sobre ocupación
 
-```{r, eval=T, echo=F}
+Algo raro de la gráfica es el pico en el origen. Revisando, encontramos que es porque 14.5% de aquellos declarados ocupados **NO TIENEN un ingreso laboral**.
+
+Se antoja extraño que que el **14.5%** de las personas que se declararon ocupadas no mantengan un salario.
+
+Unas hipótesis:
+
+1.  La definición de ocupación engloba a personas que **buscan** trabajo, pero, ¿15%?
+2.  La definición también engloba a quienes tienen un negocio, así sea informal. Esto tiene sentido.
+
+```{r, eval=T, echo=T}
 cuts <- svyquantile(~ingreso_mensual_pp, survey_trabajadores,
-                    quantiles = c(0.01, 0.99), na.rm = TRUE)
+                    quantiles = c(0.0, 0.99), na.rm = TRUE)
 
-concentrado_trabajadores %>%
-  mutate(ingreso_mensual_pp = ifelse(ingreso_mensual_pp>50258.14, 50258.14,ingreso_mensual_pp )) %>% 
+concentrado_trabajadores <- concentrado_trabajadores %>%
+  mutate(ingreso_mensual_pp = ifelse(ingreso_mensual_pp>50258.14, 50258.14,ingreso_mensual_pp )) 
+
+concentrado_trabajadores %>% 
   ggplot(aes(ingreso_mensual_pp, weights = factor))+
   geom_histogram(bins = 100)+
   geom_vline(xintercept = 19972.8, colour = 'red', linetype = 'dashed')+
@@ -308,26 +319,47 @@ concentrado_trabajadores %>%
         plot.subtitle = element_text(size = 20))
 ```
 
-Parece poco justo mantener a aquellos que, si bien están ocupados, no percibieron un salario, por lo que revisemos la distribución para aquellos **trabajadores que percibieron un salario**.
+## Ingreso Promedio 11,386 MXN
 
-## Distribución del Ingreso Laboral en México para Trabajadores que Percibieron un salario
+Cambiando los deciles y el rango ahora, una serie de puntializaciones:
 
-Vale la pena volver a calcular los deciles, dado que estamos cambiando el universo, en principio se antoja extraño que el
+1.  SALARIO PROMEDIO: 11,386 MXN
+2.  SALARIO MEDIANO: 8,780 MXN
+3.  YO PENDEJO - la línea roja
 
-```{r, eval=T, echo=TRUE}
-survey_trabajadores %>% as_survey() %>% mutate(trabajo_y_no_recibio = ifelse(trabajo==0,1,0)) %>% 
-  summarise(survey_mean(trabajo_y_no_recibio)) 
+```{r, eval=TRUE, echo=FALSE}
+
+cuts <- svyquantile(~ingreso_mensual_pp, survey_trabajadores,
+                    quantiles = c(0.0, 0.99), na.rm = TRUE)
+
+concentrado_trabajadores %>%
+  filter(ingreso_mensual_pp>0) %>% 
+  mutate(ingreso_mensual_pp = ifelse(ingreso_mensual_pp>50258.14, 50258.14,ingreso_mensual_pp )) %>% 
+  ggplot(aes(ingreso_mensual_pp, weights = factor))+
+  geom_histogram(bins = 100)+
+  geom_vline(xintercept = 11386, colour = 'green', linetype = 'dashed')+
+  geom_vline(xintercept = 19972.8, colour = 'blue', linetype = 'dashed')+
+  geom_vline(xintercept = 42000, colour = 'red', linetype = 'dashed')+
+  theme_minimal()+
+  labs(x = '', y = '', title = 'Distribución del ingreso laboral en México', subtitle = 'Remuneración mensual, pesos de 2024', 
+       caption = 'Elaboración propia, ENIGH 2024 - INEGI')+
+  theme(text = element_text(family = 'mulish'), 
+        plot.title = element_text(size = 28, face = 'bold'), 
+        plot.subtitle = element_text(size = 20))
+
 ```
 
-**14.5% de los hogares con personas que trabajan NO TUVIERON UN INGRESO LABORAL**, esto puede deberse a la definición de ocupado que usa el INEGI, donde las personas que buscan trabajo se encuentran ocupadas, según ellos.
+## CRÍTICO
 
-```{r, eval=T, echo=TRUE}
-concentrado_trabajadores_ct <- concentrado_trabajadores %>% filter(trabajo>0)
-survey_trabajadores <- svydesign(ids = ~folioviv, weights = ~factor, data = concentrado_trabajadores_ct)
-deciles <- svyquantile(~ingreso_mensual_pp, survey_trabajadores, quantiles = seq(0.1, 0.9, 0.1), na.rm = TRUE)
+Sí ubican que a mí no me alcanza pero para una chingada en este país? Que me parece imposible hacerme de una familia y de una propiedad con los tres pesos que gano y aún así formo parte del décimo decil?
 
-deciles$ingreso_mensual_pp
-```
+Está fuerte cawn. Chécale tú:
 
-::: :::::
-:::
+<iframe src="https://eyw2c9-david0antonio-ortega0alfaro.shinyapps.io/shiny_income_distr/"
+        width="100%" height="650px" style="border:none;">
+</iframe>
+
+
+## FIN
+
+
